@@ -59,13 +59,14 @@ def detect_person():
                 try_trigger_action()
 
             if present and not eligible_to_return:
-                logging.debug("at least one device detected presence for " + person['name'] + " so uodating last detected time")
+                logging.debug("at least one device detected presence for " + person['name'] + " so updating last detected time")
                 person['last_detected'] = datetime.now()
 
         ## debugging
         try_trigger_action()
     finally:
         schedule.enter(30, 1, detect_person)
+
 
 def get_router_macs():
     if not password:
@@ -101,9 +102,9 @@ def try_trigger_action():
         loop.run_until_complete(trigger_action())
     else:
         logging.info("not actionable at this time")
-        logging.debug(start)
-        logging.debug(stop)
-        logging.debug(now)
+        logging.debug("window start time: " + str(start.time()))
+        logging.debug("window end time: " + str(stop.time()))
+        logging.debug("last detected time: " + str(now.time()))
 
 
 async def trigger_action():
@@ -113,8 +114,9 @@ async def trigger_action():
         assert result
         for scene in result:
             for requested_scene in actions['Action']['SmartThings']['PowerOn']:
-                if scene.scene_id in  requested_scene['SceneID']:
+                if scene.scene_id in requested_scene['SceneID']:
                     result = await scene.execute()
+                    logging.info("executed scene: " + scene.name)
 
 
 
@@ -123,6 +125,10 @@ if __name__ == "__main__":
     pass
 print("main")
 loop = asyncio.get_event_loop()
+
+# Uncomment to test trigger action
+# loop.run_until_complete(trigger_action())
+
 detect_person()
 schedule.run()
 loop.close()
